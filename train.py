@@ -7,7 +7,7 @@ import numpy as np
 from test import Test
 from sklearn.metrics import confusion_matrix
 import shutil
-
+import re
 # from test import Test
 
 slim = tf.contrib.slim
@@ -97,7 +97,7 @@ class Train(object):
                                                                                         self.label_input: label})
 
             self.summary_writer.add_summary(summary=summary, global_step=global_step_curr)
-            if global_step_curr % cfg.DISPLAY.TRAIN_DISPLAY == 0:
+            if global_step_curr % cfg.DISPLAY.TRAIN_DISPLAY == 1:
                 pass
                 # add summary to graph
                 # post-process the result and save logs
@@ -107,7 +107,7 @@ class Train(object):
                                                                                                  global_step_curr,
                                                                                                  lr))
 
-            if global_step_curr % cfg.DISPLAY.TEST_DISPLAY == 0 and global_step_curr != 0:
+            if global_step_curr % cfg.DISPLAY.TEST_DISPLAY == 1 and global_step_curr != 0:
                 path = (cfg.LOGS.MODEL_SAVED_PATH + "-%d") % global_step_curr
                 test_accuracy, pred, score, test_img_path, label_test, logits = Test(path=path).test_start()
                 self.__post_process(pred, test_img_path, score, labels=label_test, global_step=global_step_curr,
@@ -166,6 +166,10 @@ class Train(object):
             # append the info
             gt_info[info.split()[-2]].append(info)
 
+        # sort the pred label classes based on fixed groundtruth classes
+        for cls in gt_info:
+            gt_info[cls].sort(key=lambda x: re.findall(r"\d", x)[-2])
+
         if os.path.exists(model_logs_txt):
             os.remove(model_logs_txt)
 
@@ -183,56 +187,4 @@ class Train(object):
 
 
 if __name__ == '__main__':
-    # # gpu_config = tf.ConfigProto(gpu_options=tf.GPUOptions(allow_growth=True))
-    # # sess = tf.Session(config=gpu_config)
-    # image_inputs = tf.placeholder(tf.float32, shape=(None, 224, 224, 3), name="image_input")
-    # label_input = tf.placeholder(tf.float32, shape=(None, cfg.DATA.CLASSES), name="label_input")
-    #
-    # with slim.arg_scope(mobilenet_v1_arg_scope(is_training=True)):
-    #     logits, _ = mobilenet_v1(image_inputs, is_training=True, num_classes=cfg.DATA.CLASSES)
-    #
-    # variables_to_restore = slim.get_variables_to_restore(exclude=['MobilenetV1/Logits/Conv2d_1c_1x1'])
-    # ckpt = os.path.join(cfg.FINETUNE.MOBILENET_V1, "mobilenet_v1_1.0_224.ckpt")
-    # init_fn = slim.assign_from_checkpoint_fn(ckpt, variables_to_restore)
-    #
-    # logits_variables1 = slim.get_variables('MobilenetV1/Logits/Conv2d_1c_1x1')
-    # logits_init1 = tf.variables_initializer(logits_variables1)
-    # logits_init_list = [logits_init1]
-    # global_step = tf.Variable(0.0, trainable=False, name="global_step")
-    #
-    # loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(labels=labels, logits=logits))
-    # learning_rate = tf.train.exponential_decay(
-    #     learning_rate=cfg.TRAIN.BASE_LR,
-    #     global_step=global_step,
-    #     decay_steps=int(cfg.IMG.NUMS / cfg.TRAIN.BATCH),
-    #     decay_rate=0.96
-    # )
-    # global_step_update = tf.assign_add(global_step, 1.0)
-    # train_step = tf.train.AdamOptimizer(learning_rate).minimize(loss)
-    #
-    # pred = tf.equal(tf.argmax(logits, axis=1), tf.argmax(labels, axis=1))
-    # accuracy = tf.reduce_mean(tf.cast(pred, tf.float32), name="accuracy")
-    #
-    # # save the model
-    # saver = tf.train.Saver(max_to_keep=1)
-    # # initialize and load the data
-    # sess.run(logits_init_list)
-    # init_fn(sess)
-    # sess.run(tf.global_variables_initializer())
-    # image_train_iter = utils.image_iterator(utils.tfrecord_load(cfg.DATA.TRAIN_OUTPUT_DIR),
-    #                                         cfg.TRAIN.BATCH, cfg.TRAIN.EPOCH)
-    #
-    # while True:
-    #     image, label = sess.run(image_train_iter)
-    #     global_step_curr = sess.run(global_step_update)
-    #
-    #     if global_step_curr % cfg.DISPLAY.TRAIN_DISPLAY == 0:
-    #         train_accuracy, train_loss, lr, _= sess.run(fetches=(accuracy, loss, learning_rate, train_step), feed_dict={inputs: image,
-    #                                                                                                    labels: label})
-    #         print("train_acc:{:.6f}\t\ttrain_loss:{:.4f}\t\titer:{:.1f}\t\tlr:{:.8f}".format(train_accuracy, train_loss,
-    #                                                                                          global_step_curr,
-    #                                                                                          lr))
-    #         saver.save(sess, save_path=cfg.LOGS.MODEL_SAVED_PATH, global_step=int(global_step_curr))
-    #
-
     Train(pretrained="mobilenet_v1").train()
