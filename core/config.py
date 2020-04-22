@@ -40,6 +40,7 @@ __C.LOGS.OUTPUT_SNAPSHOT_NAME = "snapshot"
 __C.LOGS.MODEL_SAVED_NAME = "AniDector"
 __C.LOGS.INFO_TRAIN = "./output/img_info_train.txt"
 __C.LOGS.INFO_TEST = "./output/img_info_test.txt"
+__C.LOGS.EVENTS_PATH = os.path.join(__C.LOGS.OUTPUT_DIR, "logs")
 __C.LOGS.OUTPUT_SNAPSHOT_DIR = os.path.join(__C.LOGS.OUTPUT_DIR, __C.LOGS.OUTPUT_SNAPSHOT_NAME)
 __C.LOGS.MODEL_SAVED_PATH = os.path.join(__C.LOGS.OUTPUT_SNAPSHOT_DIR, __C.LOGS.MODEL_SAVED_NAME)
 

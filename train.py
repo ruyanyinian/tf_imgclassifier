@@ -6,6 +6,7 @@ import os
 import numpy as np
 from test import Test
 from sklearn.metrics import confusion_matrix
+import shutil
 
 # from test import Test
 
@@ -41,6 +42,17 @@ class Train(object):
 
         os.environ["CUDA_VISIBLE_DEVICES"] = "/gpu:0"
         self.sess = tf.Session(config=tf.ConfigProto(gpu_options=tf.GPUOptions(allow_growth=True)))
+
+        with tf.name_scope("summary"):
+            tf.summary.scalar("learning_rate", self.learning_rate)
+            tf.summary.scalar("loss", self.loss)
+            tf.summary.scalar("accuracy", self.accuracy)
+
+            if os.path.exists(cfg.LOGS.EVENTS_PATH): shutil.rmtree(cfg.LOGS.EVENTS_PATH)
+            os.mkdir(cfg.LOGS.EVENTS_PATH)
+            self.write_op = tf.summary.merge_all()
+            self.summary_writer = tf.summary.FileWriter(cfg.LOGS.EVENTS_PATH, graph=self.sess.graph)
+
         self.label_dict = utils.label_to_dict(path=cfg.DATA.LABEL_FILEPATH)
         self.label_dict = {value: key for key, value in self.label_dict.items()}
 
@@ -71,16 +83,23 @@ class Train(object):
         while True:
             image, label, image_path = self.sess.run(image_train_iter)
             global_step_curr = self.sess.run(self.global_step_update)
+
+            train_accuracy, train_loss, lr, _, pred, score, summary = self.sess.run(fetches=(self.accuracy,
+                                                                                             self.loss,
+                                                                                             self.learning_rate,
+                                                                                             self.train_step,
+                                                                                             self.pred,
+                                                                                             self.score,
+                                                                                             self.write_op
+                                                                                             ),
+                                                                                    feed_dict={
+                                                                                        self.image_input: image,
+                                                                                        self.label_input: label})
+
+            self.summary_writer.add_summary(summary=summary, global_step=global_step_curr)
             if global_step_curr % cfg.DISPLAY.TRAIN_DISPLAY == 0:
-                train_accuracy, train_loss, lr, _, pred, score = self.sess.run(fetches=(self.accuracy,
-                                                                                        self.loss,
-                                                                                        self.learning_rate,
-                                                                                        self.train_step,
-                                                                                        self.pred,
-                                                                                        self.score),
-                                                                               feed_dict={
-                                                                                   self.image_input: image,
-                                                                                   self.label_input: label})
+                pass
+                # add summary to graph
                 # post-process the result and save logs
                 self.saver.save(self.sess, save_path=cfg.LOGS.MODEL_SAVED_PATH, global_step=int(global_step_curr))
                 print("train_acc:{:.6f}\t\ttrain_loss:{:.4f}\t\titer:{:.1f}\t\tlr:{:.8f}".format(train_accuracy,
@@ -91,7 +110,8 @@ class Train(object):
             if global_step_curr % cfg.DISPLAY.TEST_DISPLAY == 0 and global_step_curr != 0:
                 path = (cfg.LOGS.MODEL_SAVED_PATH + "-%d") % global_step_curr
                 test_accuracy, pred, score, test_img_path, label_test, logits = Test(path=path).test_start()
-                self.__post_process(pred, test_img_path, score, labels=label_test, global_step=global_step_curr, logits=logits)
+                self.__post_process(pred, test_img_path, score, labels=label_test, global_step=global_step_curr,
+                                    logits=logits)
                 print(("*" * 10 + "test_accuracy %.4f" + "*" * 10) % test_accuracy)
 
             if global_step_curr == 200000.0:
@@ -161,6 +181,7 @@ class Train(object):
             f.write("\n\n\n")
             f.close()
 
+
 if __name__ == '__main__':
     # # gpu_config = tf.ConfigProto(gpu_options=tf.GPUOptions(allow_growth=True))
     # # sess = tf.Session(config=gpu_config)
@@ -213,6 +234,5 @@ if __name__ == '__main__':
     #                                                                                          lr))
     #         saver.save(sess, save_path=cfg.LOGS.MODEL_SAVED_PATH, global_step=int(global_step_curr))
     #
-
 
     Train(pretrained="mobilenet_v1").train()
