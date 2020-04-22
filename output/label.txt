@@ -1,0 +1,6 @@
+elephant
+lion
+others
+panda
+punguin
+zebra

@@ -1,0 +1,1 @@
+F:\DL_Data\Animal\train_data\elephant\IMG_0766\aug_images\000093_6.png 0.51494825 class 3GT0

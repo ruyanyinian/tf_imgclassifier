@@ -1,0 +1,2 @@
+img_nums: 93609
+num_classes: 6
