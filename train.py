@@ -97,7 +97,7 @@ class Train(object):
                                                                                         self.label_input: label})
 
             self.summary_writer.add_summary(summary=summary, global_step=global_step_curr)
-            if global_step_curr % cfg.DISPLAY.TRAIN_DISPLAY == 1:
+            if global_step_curr % cfg.DISPLAY.TRAIN_DISPLAY == 0:
                 pass
                 # add summary to graph
                 # post-process the result and save logs
@@ -107,7 +107,7 @@ class Train(object):
                                                                                                  global_step_curr,
                                                                                                  lr))
 
-            if global_step_curr % cfg.DISPLAY.TEST_DISPLAY == 1 and global_step_curr != 0:
+            if global_step_curr % cfg.DISPLAY.TEST_DISPLAY == 0 and global_step_curr != 0:
                 path = (cfg.LOGS.MODEL_SAVED_PATH + "-%d") % global_step_curr
                 test_accuracy, pred, score, test_img_path, label_test, logits = Test(path=path).test_start()
                 self.__post_process(pred, test_img_path, score, labels=label_test, global_step=global_step_curr,

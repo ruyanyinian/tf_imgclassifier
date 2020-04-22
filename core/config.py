@@ -28,7 +28,7 @@ __C.TRAIN.BASE_LR = 0.02
 
 # test options
 __C.TEST = Edict()
-__C.TEST.BATCH = 128
+__C.TEST.BATCH = 1280
 __C.TEST.EPOCH = 200
 
 # logs and model options
