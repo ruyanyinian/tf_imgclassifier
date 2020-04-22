@@ -1,5 +1,6 @@
-import numpy as np
+import re
 
-a = np.array([[1,2,3], [4,5,6]])
+# 'F:\\DL_Data\\Animal\\test_data\\elephant\\IMG_0796\\src_images\\000036.jpg 0.61686623 class 4 punguin GT 0 elephant'
 
-np.savetxt("sss",a,fmt="%s",delimiter=",")
+string = r"F:\\DL_Data\\Animal\\test_data\\elephant\\IMG_0796\\src_images\\000036.jpg 0.61686623 class 4 punguin GT 0 elephant"
+print(re.findall(r"\d", string))
